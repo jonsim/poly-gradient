@@ -12,6 +12,19 @@ def right_angle_triangles(x, y, max_x, max_y):
         yield [(0, 0), (1, 0), (0, 1)]
         yield [(1, 1), (1, 0), (0, 1)]
 
+def equilateral_triangles(x, y, max_x, max_y):
+    shift_right = y & 1 == 1
+    shift = 0.5 if shift_right else 0
+    # We typically generate a triangle centered on this cell, as well as one
+    # that overlaps with the cell to the right. To ensure we fill the image, we
+    # also need to generate an overlap on the left hand edge.
+    if x == 0:
+        if shift_right:
+            yield [(shift - 1  , 0), (shift      , 0), (shift - 0.5,     math.sqrt(3) / 2)]
+        yield [    (shift - 0.5, 1), (shift + 0.5, 1), (shift + 0  , 1 - math.sqrt(3) / 2)]
+    yield [        (shift + 0  , 0), (shift + 1  , 0), (shift + 0.5,     math.sqrt(3) / 2)]
+    yield [        (shift + 0.5, 1), (shift + 1.5, 1), (shift + 1  , 1 - math.sqrt(3) / 2)]
+
 def pink_black_gradient(gradient_value):
     return '#ee99dd' if random.random() <= gradient_value else 'black'
 
@@ -55,7 +68,8 @@ def gradient(filename,
              gradient_function,
              color_function,
              solid_cells_color=0,
-             solid_cells_black=0):
+             solid_cells_black=0,
+             polygon_padding=0.05):
     def _transform_points(points, scale=1, translate=(0, 0)):
         return [((x+translate[0])*scale,
                  (y+translate[1])*scale)
@@ -66,6 +80,8 @@ def gradient(filename,
     canvas_size = (cells_x * cell_size_mm * mm,
                    cells_y * cell_size_mm * mm)
     canvas = Drawing(filename=filename, size=canvas_size, debug=True)
+    # Draw a background rectangle
+    # canvas.add(canvas.rect(size=canvas_size, fill='cyan'))
     # Polygons are annoying and must have their size specified in raw
     # co-ordinates, without units. To work around this we create an SVG
     # sub-element scaled to the expected unit-size, then set its viewbox
@@ -85,7 +101,7 @@ def gradient(filename,
                     points=_transform_points(polygon_points, translate=(x, y)),
                     fill=color,
                     stroke=color,
-                    stroke_width=0.05)
+                    stroke_width=polygon_padding)
                 polygons.add(polygon)
     canvas.save()
     
@@ -107,7 +123,7 @@ if __name__ == '__main__':
                         default='linear',
                         help='Type of gradient to generate.')
     parser.add_argument('--shape',
-                        choices=['triangles'],
+                        choices=['triangles', 'arrows'],
                         default='triangles',
                         help='Polygon to generate the gradient from.')
     parser.add_argument('--cell-size',
@@ -130,6 +146,10 @@ if __name__ == '__main__':
 
     if args.shape == 'triangles':
         polygon_function = right_angle_triangles
+        polygon_padding = 0.05
+    elif args.shape == 'arrows':
+        polygon_function = equilateral_triangles
+        polygon_padding = 0.08
     else:
         raise RuntimeError('Unknown shape type "{}"', args.shape)
 
@@ -138,4 +158,5 @@ if __name__ == '__main__':
              args.cell_size,
              polygon_function,
              gradient_function,
-             color_function)
+             color_function,
+             polygon_padding=polygon_padding)
