@@ -5,8 +5,7 @@ import random
 from svgwrite import Drawing, mm
 
 def right_angle_triangles(x, y, max_x, max_y):
-    flip = random.randint(1, 100) <= 50
-    if flip:
+    if random.randint(0, 1):
         yield [(0, 0), (1, 1), (0, 1)]
         yield [(0, 0), (1, 1), (1, 0)]
     else:
@@ -14,19 +13,19 @@ def right_angle_triangles(x, y, max_x, max_y):
         yield [(1, 1), (1, 0), (0, 1)]
 
 def pink_black_gradient(gradient_value):
-    return '#ee99dd' if random.randint(1, 100) <= gradient_value else 'black'
+    return '#ee99dd' if random.random() <= gradient_value else 'black'
 
 def linear_gradient(x, y, max_x, max_y,
                     solid_cells_color, solid_cells_black):
     if y < solid_cells_black:
         return 0
     elif y >= (max_y - solid_cells_color):
-        return 100
+        return 1
     else:
         y -= solid_cells_black
         y += 0.5 # Adjustment for our zero-origin co-ordinates.
         max_y -= solid_cells_color + solid_cells_black
-        return y * (100 / max_y)
+        return y * (1 / max_y)
 
 def radial_gradient(x, y, max_x, max_y,
                     solid_cells_color, solid_cells_black):
@@ -34,7 +33,7 @@ def radial_gradient(x, y, max_x, max_y,
     center_x = (max_x-1) / 2  # Adjustment for our zero-origin co-ordinate system.
     center_y = (max_y-1) / 2
     dist_from_center = math.sqrt(abs(center_x - x)**2 + abs(center_y - y)**2)
-    v = 100 - linear_gradient(
+    v = 1 - linear_gradient(
         dist_from_center, dist_from_center,
         center_x+1, center_y+1,
         solid_cells_black, solid_cells_color)
